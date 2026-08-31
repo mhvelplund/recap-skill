@@ -16,7 +16,7 @@ The skill needs to know where your git repositories live. Set `RECAP_GIT_HOME` t
 and the skill will stop and ask you to set it if it is missing:
 
 ```shell
-echo 'export RECAP_GIT_HOME="$HOME/projects"' >> ~/.zshrc  # or ~/.bashrc
+echo 'export RECAP_GIT_HOME="$HOME/projects"' >> ~/.profile  # or ~/.bash_profile
 ```
 
 What gets scanned:
