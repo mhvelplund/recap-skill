@@ -22,6 +22,14 @@ discovers everything itself.
 `--since` accepts `workday` (default — back to 10:00 of the previous working day, so Monday reaches Friday), a duration
 (`24h`, `48h`, `3d`), a weekday name (`friday`), or an ISO timestamp.
 
+The collector scans the directory named by the **`RECAP_GIT_HOME`** environment variable for git repos. It is required
+and has no default. If the collector exits non-zero it prints one JSON object on stderr with an `error` field — handle
+these two and **stop**: no table, no partial report, no fallback scan of your own.
+
+- `RECAP_GIT_HOME_NOT_SET` — tell the user to set `RECAP_GIT_HOME` to the directory holding their git repositories and
+  re-run, e.g. add `export RECAP_GIT_HOME="$HOME/projects"` to `~/.zshrc` (or `~/.bashrc`).
+- `RECAP_GIT_HOME_INVALID` — report the path it named; the directory does not exist, so it is a typo or a stale config.
+
 **Never read `~/.claude/projects/**/*.jsonl` or `~/.claude/history.jsonl` yourself.** One day of sessions is ~6.7 MB
 (~1.7M tokens) and will blow the context window. The collector streams them and returns ~10 KB of facts. If `zx` is
 missing, say so and stop — do not improvise a shell equivalent.

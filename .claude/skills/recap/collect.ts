@@ -4,6 +4,8 @@
 //
 // Run: zx ~/.claude/skills/recap/collect.ts [--since workday|24h|friday|<ISO>] [--author <email>]
 //
+// Requires RECAP_GIT_HOME -- the directory holding the user's git repos.
+//
 // cwd-independent by contract: nothing here reads process.cwd() to decide scope.
 
 import { readdir, stat } from "node:fs/promises";
@@ -16,9 +18,33 @@ import { join, basename, dirname } from "node:path";
 $.verbose = false;
 
 const HOME = homedir();
-const PROJECTS_DIR = join(HOME, "projects");
 const CLAUDE_PROJECTS = join(HOME, ".claude", "projects");
 const HISTORY_FILE = join(HOME, ".claude", "history.jsonl");
+
+// The root to scan for git repos. There is no default: guessing ~/projects
+// produces a plausible-looking but silently incomplete recap for anyone who
+// keeps their checkouts elsewhere. Fail loudly instead, on stderr, so stdout
+// stays a pure JSON facts object on the success path.
+function configError(error: string, message: string): never {
+  console.error(JSON.stringify({ error, message }));
+  process.exit(1);
+}
+
+const GIT_HOME = (process.env.RECAP_GIT_HOME ?? "").trim();
+
+if (!GIT_HOME) {
+  configError(
+    "RECAP_GIT_HOME_NOT_SET",
+    'RECAP_GIT_HOME is not set. Set it to the directory containing your git repositories, e.g. export RECAP_GIT_HOME="$HOME/projects"',
+  );
+}
+
+if (!existsSync(GIT_HOME)) {
+  configError(
+    "RECAP_GIT_HOME_INVALID",
+    `RECAP_GIT_HOME points at "${GIT_HOME}", which does not exist.`,
+  );
+}
 
 const NUL = "\x00";
 // git expands the literal text %x1f / %1f into this byte. A real NUL byte
@@ -360,38 +386,37 @@ async function mainRepoRoot(p: string): Promise<string | null> {
 async function discoverRepos(sessionPaths: string[]): Promise<string[]> {
   const roots = new Set<string>();
 
-  if (existsSync(PROJECTS_DIR)) {
-    let entries: string[] = [];
+  // GIT_HOME is proven to exist at startup, so no existsSync guard here.
+  let entries: string[] = [];
+  try {
+    entries = await readdir(GIT_HOME);
+  } catch {
+    /* ignore */
+  }
+  for (const e of entries) {
+    if (e.startsWith(".")) continue;
+    const p = join(GIT_HOME, e);
     try {
-      entries = await readdir(PROJECTS_DIR);
+      if (!(await stat(p)).isDirectory()) continue;
+    } catch {
+      continue;
+    }
+    if (isRepoRoot(p)) {
+      roots.add(p);
+      continue;
+    }
+    // one level down catches nested repos (e.g. black-glass-gm/www)
+    try {
+      for (const sub of await readdir(p)) {
+        const q = join(p, sub);
+        try {
+          if ((await stat(q)).isDirectory() && isRepoRoot(q)) roots.add(q);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       /* ignore */
-    }
-    for (const e of entries) {
-      if (e.startsWith(".")) continue;
-      const p = join(PROJECTS_DIR, e);
-      try {
-        if (!(await stat(p)).isDirectory()) continue;
-      } catch {
-        continue;
-      }
-      if (isRepoRoot(p)) {
-        roots.add(p);
-        continue;
-      }
-      // one level down catches nested repos (e.g. black-glass-gm/www)
-      try {
-        for (const sub of await readdir(p)) {
-          const q = join(p, sub);
-          try {
-            if ((await stat(q)).isDirectory() && isRepoRoot(q)) roots.add(q);
-          } catch {
-            /* ignore */
-          }
-        }
-      } catch {
-        /* ignore */
-      }
     }
   }
 
