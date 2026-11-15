@@ -4,7 +4,7 @@ description:
   Terse table of what the user worked on since the last working day — repo, branch, PR, description. Use for
   "recap", "what was I doing", "what did I work on yesterday".
 argument-hint: "[24h|48h|friday]"
-allowed-tools: Bash(zx:*), Bash(mkdir:*), Write
+allowed-tools: Bash(npx --yes zx:*), Bash(mkdir:*), Write
 ---
 
 # Recap
@@ -16,7 +16,7 @@ discovers everything itself.
 ## 1. Collect
 
 ```bash
-~/.claude/skills/recap/collect.ts --since "${0:-workday}"
+npx --yes zx "${CLAUDE_SKILL_DIR}/collect.ts" --since "${0:-workday}"
 ```
 
 `--since` accepts `workday` (default — back to 10:00 of the previous working day, so Monday reaches Friday), a duration
@@ -27,12 +27,12 @@ and has no default. If the collector exits non-zero it prints one JSON object on
 these two and **stop**: no table, no partial report, no fallback scan of your own.
 
 - `RECAP_GIT_HOME_NOT_SET` — tell the user to set `RECAP_GIT_HOME` to the directory holding their git repositories and
-  re-run, e.g. add `export RECAP_GIT_HOME="$HOME/projects"` to `~/.zshrc` (or `~/.bashrc`).
+  re-run, e.g. add `export RECAP_GIT_HOME="$HOME/projects"` to `~/.profile` (or `~/.bash_profile`).
 - `RECAP_GIT_HOME_INVALID` — report the path it named; the directory does not exist, so it is a typo or a stale config.
 
 **Never read `~/.claude/projects/**/*.jsonl` or `~/.claude/history.jsonl` yourself.** One day of sessions is ~6.7 MB
-(~1.7M tokens) and will blow the context window. The collector streams them and returns ~10 KB of facts. If `zx` is
-missing, say so and stop — do not improvise a shell equivalent.
+(~1.7M tokens) and will blow the context window. The collector streams them and returns ~10 KB of facts. If `npx`
+(Node.js) is missing, say so and stop — do not improvise a shell equivalent.
 
 ## 2. Build the table
 

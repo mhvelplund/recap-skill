@@ -2,7 +2,7 @@
 // Recap fact collector. Gathers git + Claude-session + GitHub facts for a time
 // window and prints one JSON object. Never renders a table -- the model does that.
 //
-// Run: zx ~/.claude/skills/recap/collect.ts [--since workday|24h|friday|<ISO>] [--author <email>]
+// Run: npx --yes zx <skill-dir>/collect.ts [--since workday|24h|friday|<ISO>] [--author <email>]
 //
 // Requires RECAP_GIT_HOME -- the directory holding the user's git repos.
 //
