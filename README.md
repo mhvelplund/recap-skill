@@ -4,11 +4,19 @@ _Old age took your memory? This skill tells you what you were doing._
 
 ## Prerequisites
 
-You need a reasonably new version of Node.js and Google/zx. The latter can be installed from NPM:
+A reasonably new version of Node.js (with `npx`). The collector script runs on [zx](https://github.com/google/zx), which
+the skill fetches automatically via `npx` on first run — no global install needed.
+
+## Installation
+
+Install with [`npx skills`](https://github.com/vercel-labs/skills):
 
 ```shell
-npm install -g zx
+npx skills add mhvelplund/recap-skill -g -a claude-code
 ```
+
+`-g` installs for your user (`~/.claude/skills/recap`). Drop it to install into the current project instead
+(`.claude/skills/recap`). Keep it current with `npx skills update`, and uninstall with `npx skills remove recap`.
 
 ## Configuration
 
@@ -28,13 +36,6 @@ What gets scanned:
 If `RECAP_GIT_HOME` is unset, or points at a directory that does not exist, the collector exits with an error and the
 skill tells you to fix it instead of producing a half-empty recap.
 
-## Installation
-
-Copy the skill to your `.claude` dir:
-
-```shell
-mkdir -p ~/.claude/skills/
-cp -a .claude/skills/recap ~/.claude/skills/.
-```
+## Usage
 
 Start Claude and write `What did I do yesterday?` or `/recap last week`.
